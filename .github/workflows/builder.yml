@@ -1,0 +1,69 @@
+name: 'Recovery Builder'
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: 'README.md'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    env:
+      # Change these values in you are Forking the repo for own use
+      GitHubMail: "rokibhasansagar2014@outlook.com"
+      GitHubName: "rokibhasansagar"
+      # These Variables are for Building Recovery
+      manifest_url: ""
+      manifest_branch: ""
+      dt_link: ""
+      # dt_br: ""
+      vendor: ""
+      codename: ""
+      # kernel_link: ""
+      # kernel_br: ""
+      flavor: ""
+      target: ""
+
+    steps:
+      # Set Git Configs
+      - name: Set Git Configs & Secrets
+        run: |
+          git config --global user.email ${GitHubMail}
+          git config --global user.name ${GitHubName}
+          git config --global credential.helper store
+          echo "https://${GitHubName}:${{ secrets.GH_TOKEN }}@github.com" > ~/.git-credentials
+      # Checkout this repository
+      - uses: actions/checkout@v2
+      # Cleanup The Workspace Using Custom Composite Run Actions
+      - uses: rokibhasansagar/slimhub_actions@main
+      # Initialize Build Environment
+      - uses: rokibhasansagar/build-env_actions@main
+      # Repo sync and Build Recovery/Boot Image
+      - name: Build Recovery
+        run: |
+          [[ -z ${manifest_branch}" || -z ${manifest_url} || -z ${dt_link} || -z ${vendor} || -z ${codename} || -z ${flavor} || -z ${target} ]] && { printf "Please set all required variables..\n"; exit 1; }
+          printf "Script will use %s branch of %s manifest for building %s.\n" "${manifest_branch}" "${manifest_url}" "${target}"
+          mkdir -p work && cd work
+          printf "Syncing repo sources. This will take a lot of time. Be patient...\n"
+          repo init -q -u ${manifest_url} -b ${manifest_branch} --depth=1 --groups=all,-notdefault,-device,-darwin,-x86,-mips
+          repo sync -c -q --force-sync --no-clone-bundle --no-tags -j6
+          printf "Cloning Device Tree...\n"
+          git clone ${dt_link} $([[ ! -z ${dt_br} ]] && echo "-b ${dt_br}") --depth=1 device/${vendor}/${codename}
+          if [[ -n ${kernel_link} ]]; then
+            printf "Cloning Kernel Source...\n"
+            git clone ${kernel_link} $([[ ! -z ${kernel_br} ]] && echo "-b ${kernel_br}") --depth=1 kernel/${vendor}/${codename}
+          fi
+          printf "Building %s...\n" "${target}"
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch omni_${codename}-${flavor}
+          # If lunch throws error for roomservice, replace the `roomservice.py` with appropriate one from helper
+          # >> https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/
+          mka ${target}
+      - name: Publish Release with ghr
+        run: |
+          mkdir release
+          cp work/out/target/product/${codename}/*.img work/out/target/product/${codename}/*.zip release/ 2>/dev/null
+          ghr -t ${{ secrets.GH_TOKEN }} -u ${GITHUB_REPOSITORY%/*} -r ${GITHUB_REPOSITORY#*/} -n "$(echo $flavor) Release for $(echo $codename)" -c ${GITHUB_SHA} -delete $(echo ${codename}-$(date -u +%d.%m.%Y-%H.%M)) release/

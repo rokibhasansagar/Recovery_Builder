@@ -37,15 +37,19 @@ jobs:
       # Checkout this repository
       - uses: actions/checkout@v2
       # Cleanup The Workspace Using Custom Composite Run Actions
-      - uses: rokibhasansagar/slimhub_actions@main
+      #- uses: rokibhasansagar/slimhub_actions@main
       # Initialize Build Environment
       - uses: rokibhasansagar/build-env_actions@main
       # Repo sync and Build Recovery/Boot Image
       - name: Build Recovery
         run: |
+          set -v
+          ls -lA ../
           [[ -z ${manifest_branch} || -z ${manifest_url} || -z ${dt_link} || -z ${vendor} || -z ${codename} || -z ${flavor} || -z ${target} ]] && { printf "Please set all required variables..\n"; exit 1; }
           printf "Script will use %s branch of %s manifest for building %s.\n" "${manifest_branch}" "${manifest_url}" "${target}"
           mkdir -p work && cd work
+          pwd
+          sudo chown -R runner .
           printf "Syncing repo sources. This will take a lot of time. Be patient...\n"
           repo init -q -u ${manifest_url} -b ${manifest_branch} --depth=1 --groups=all,-notdefault,-device,-darwin,-x86,-mips
           repo sync -c -q --force-sync --no-clone-bundle --no-tags -j6
@@ -59,11 +63,13 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           # Roomservice hack for Marshmallow Unofficial Builds
           rm -f build/tools/roomservice.py && curl -sL https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/raw/roomservice_60.py -o build/tools/roomservice.py
+          file build/tools/roomservice.py
           source build/envsetup.sh
           lunch omni_${codename}-${flavor}
           # If lunch throws error for roomservice, replace the `roomservice.py` with appropriate one from helper
           # >> https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/
           mka ${target}
+          set +v
       - name: Publish Release with ghr
         run: |
           mkdir release

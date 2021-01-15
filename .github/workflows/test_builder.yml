@@ -37,12 +37,13 @@ jobs:
       # Checkout this repository
       - uses: actions/checkout@v2
       # Cleanup The Workspace Using Custom Composite Run Actions
-      #- uses: rokibhasansagar/slimhub_actions@main
+      - uses: rokibhasansagar/slimhub_actions@main
       # Initialize Build Environment
       - uses: rokibhasansagar/build-env_actions@main
       # Repo sync and Build Recovery/Boot Image
-      - run: printenv | sort
       - run: echo "/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_PATH
+      - run: printenv | sort
+      - run: ls -lAog ${JAVA_HOME}
       - name: Build Recovery
         run: |
           set -v
@@ -65,7 +66,7 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           # Roomservice hack for Marshmallow Unofficial Builds
           rm -f build/tools/roomservice.py && curl -sL https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/raw/roomservice_60.py -o build/tools/roomservice.py
-          file build/tools/roomservice.py
+          head -n 20 build/tools/roomservice.py
           source build/envsetup.sh
           lunch omni_${codename}-${flavor}
           # If lunch throws error for roomservice, replace the `roomservice.py` with appropriate one from helper

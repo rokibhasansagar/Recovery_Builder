@@ -1,8 +1,8 @@
-name: 'Recovery Builder'
+name: 'Recovery Builder Test'
 
 on:
   push:
-    branches: [ main ]
+    branches: [ test ]
     paths-ignore: 'README.md'
   workflow_dispatch:
 
@@ -15,16 +15,16 @@ jobs:
       GitHubMail: "rokibhasansagar2014@outlook.com"
       GitHubName: "rokibhasansagar"
       # These Variables are for Building Recovery
-      manifest_url: ""
-      manifest_branch: ""
-      dt_link: ""
-      # dt_br: ""
-      vendor: ""
-      codename: ""
+      manifest_url: "https://github.com/OmniROM-Legacy/minimal_manifest_twrp_omni"
+      manifest_branch: "twrp-6.0"
+      dt_link: "https://github.com/rokibhasansagar/android_device_twrp_WALTON_Primo_RX5"
+      dt_br: "master"
+      vendor: "WALTON"
+      codename: "Primo_RX5"
       # kernel_link: ""
       # kernel_br: ""
-      flavor: ""
-      target: ""
+      flavor: "userdebug"
+      target: "recoveryimage"
 
     steps:
       # Set Git Configs
@@ -57,6 +57,8 @@ jobs:
           fi
           printf "Building %s...\n" "${target}"
           export ALLOW_MISSING_DEPENDENCIES=true
+          # Roomservice hack for Marshmallow Unofficial Builds
+          rm -f build/tools/roomservice.py && curl -sL https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/raw/roomservice_60.py -o build/tools/roomservice.py
           source build/envsetup.sh
           lunch omni_${codename}-${flavor}
           # If lunch throws error for roomservice, replace the `roomservice.py` with appropriate one from helper

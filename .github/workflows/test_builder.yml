@@ -52,7 +52,7 @@ jobs:
           printf "Script will use %s branch of %s manifest for building %s.\n" "${manifest_branch}" "${manifest_url}" "${target}"
           mkdir -p work && cd work
           pwd
-          sudo chown -R runner .
+          sudo chown -R runner:root .
           printf "Syncing repo sources. This will take a lot of time. Be patient...\n"
           repo init -q -u ${manifest_url} -b ${manifest_branch} --depth=1 --groups=all,-notdefault,-device,-darwin,-x86,-mips
           repo sync -c -q --force-sync --no-clone-bundle --no-tags -j6
@@ -65,8 +65,7 @@ jobs:
           printf "Building %s...\n" "${target}"
           export ALLOW_MISSING_DEPENDENCIES=true
           # Roomservice hack for Marshmallow Unofficial Builds
-          rm -f build/tools/roomservice.py && curl -sL https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/raw/roomservice_60.py -o build/tools/roomservice.py
-          head -n 20 build/tools/roomservice.py
+          rm -f build/tools/roomservice.py && curl -sL https://gist.github.com/rokibhasansagar/247ddd4ef00dcc9d3340397322051e6a/raw/roomservice_60.py -o build/tools/roomservice.py && chmod a+x build/tools/roomservice.py
           source build/envsetup.sh
           lunch omni_${codename}-${flavor}
           # If lunch throws error for roomservice, replace the `roomservice.py` with appropriate one from helper

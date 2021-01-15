@@ -41,10 +41,12 @@ jobs:
       # Initialize Build Environment
       - uses: rokibhasansagar/build-env_actions@main
       # Repo sync and Build Recovery/Boot Image
+      - run: printenv | sort
+      - run: echo "/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_PATH
       - name: Build Recovery
         run: |
           set -v
-          ls -lA ../
+          ls -la ../
           [[ -z ${manifest_branch} || -z ${manifest_url} || -z ${dt_link} || -z ${vendor} || -z ${codename} || -z ${flavor} || -z ${target} ]] && { printf "Please set all required variables..\n"; exit 1; }
           printf "Script will use %s branch of %s manifest for building %s.\n" "${manifest_branch}" "${manifest_url}" "${target}"
           mkdir -p work && cd work

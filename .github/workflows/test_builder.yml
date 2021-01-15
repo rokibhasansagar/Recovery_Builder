@@ -43,7 +43,7 @@ jobs:
       # Repo sync and Build Recovery/Boot Image
       - name: Build Recovery
         run: |
-          [[ -z ${manifest_branch}" || -z ${manifest_url} || -z ${dt_link} || -z ${vendor} || -z ${codename} || -z ${flavor} || -z ${target} ]] && { printf "Please set all required variables..\n"; exit 1; }
+          [[ -z ${manifest_branch} || -z ${manifest_url} || -z ${dt_link} || -z ${vendor} || -z ${codename} || -z ${flavor} || -z ${target} ]] && { printf "Please set all required variables..\n"; exit 1; }
           printf "Script will use %s branch of %s manifest for building %s.\n" "${manifest_branch}" "${manifest_url}" "${target}"
           mkdir -p work && cd work
           printf "Syncing repo sources. This will take a lot of time. Be patient...\n"
